@@ -1,0 +1,16 @@
+{
+  "pythonVersion": "3.11",
+  "pythonPlatform": "Linux",
+  "reportMissingImports": "none",
+  "reportMissingModuleSource": "none",
+  "reportPossiblyUnbound": "none",
+  "reportUndefinedVariable": "none",
+  "exclude": [
+    "**/.git",
+    "**/.venv",
+    "**/venv",
+    "**/node_modules",
+    "**/__pycache__",
+    "**/.pytest_cache"
+  ]
+}

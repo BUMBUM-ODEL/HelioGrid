@@ -1,0 +1,10 @@
+{
+  "deno.enable": true,
+  "deno.enablePaths": ["src/supabase/functions"],
+  "deno.lint": true,
+  "deno.unstable": true,
+  "python.analysis.diagnosticSeverityOverrides": {
+    "reportMissingImports": "none",
+    "reportMissingModuleSource": "none"
+  }
+}

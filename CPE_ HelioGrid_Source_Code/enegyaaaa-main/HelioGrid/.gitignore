@@ -1,0 +1,9 @@
+# Python runtime/cache artifacts
+__pycache__/
+*.py[cod]
+
+# Local backup/temporary files
+*.bak
+
+# Flask server-side session files
+src/backend/api/flask_sessions/

@@ -1,0 +1,35 @@
+# ========================================
+# WINDOWS DEVELOPMENT DEPENDENCIES
+# (For testing on your PC - no hardware required)
+# ========================================
+
+# --- API Framework ---
+Flask==3.0.0
+Flask-CORS==4.0.0
+Flask-Mail==0.9.1
+python-dotenv==1.0.0
+
+# --- Configuration & Utilities ---
+PyYAML>=6.0
+schedule>=1.2.0
+
+# --- Data Processing ---
+numpy>=1.24.0
+pandas>=2.0.0
+
+# --- Logging ---
+colorlog>=6.7.0
+
+# --- Testing ---
+pytest>=7.4.0
+pytest-asyncio>=0.21.0
+
+# --- Development ---
+black>=23.7.0
+flake8>=6.1.0
+
+# ========================================
+# NOTA: RPi.GPIO, adafruit libraries, and 
+# smbus2 are EXCLUDED - these only work 
+# on actual Raspberry Pi hardware
+# ========================================

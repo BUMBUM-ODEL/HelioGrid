@@ -1,0 +1,22 @@
+{
+  "compilerOptions": {
+    "lib": ["deno.window", "deno.unstable"],
+    "strict": true,
+    "allowJs": true,
+    "checkJs": false
+  },
+  "importMap": "./import_map.json",
+  "tasks": {
+    "dev": "deno run --allow-net --allow-env --allow-read --watch index.tsx"
+  },
+  "fmt": {
+    "files": {
+      "include": ["*.ts", "*.tsx"]
+    }
+  },
+  "lint": {
+    "files": {
+      "include": ["*.ts", "*.tsx"]
+    }
+  }
+}

@@ -1,0 +1,155 @@
+# ========================================
+# SENSOR CONFIGURATION
+# Hybrid Smart Energy System
+# ========================================
+
+sensors:
+
+  # --- PZEM-017 DC Battery Meters (Modbus RTU via USB-TTL) ---
+  # Replaces INA226 I2C dual-module battery current sensing.
+  # All 4 units share one RS485 bus: USB Hub → /dev/ttyBatteryPZEM (ttyUSB3)
+  #
+  # Bank A (always active — 100Ah):
+  #   B1 → 12V 100Ah bottom battery | addr 0x01 (factory default)
+  #   B2 → 12V 100Ah top battery    | addr 0x02 (set via PZEM Config Tool)
+  # Bank B (200Ah expansion — plug-and-play):
+  #   B3 → 12V 100Ah bottom battery | addr 0x03 (set via PZEM Config Tool)
+  #   B4 → 12V 100Ah top battery    | addr 0x04 (set via PZEM Config Tool)
+  #
+  # Auto-detect: backend tries to read B3/B4 each cycle.
+  #   B3+B4 offline → 100Ah mode (pack_V = B1.V + B2.V)
+  #   B3+B4 online  → 200Ah mode (pack_V = avg, pack_I = BankA.I + BankB.I)
+  pzem017:
+    # ── Bank A ──────────────────────────────────────────────
+    - port: /dev/ttyBatteryPZEM
+      baudrate: 9600
+      stopbits: 2
+      timeout: 1.0
+      slave_addr: 0x01
+      label: "Battery 1"
+      bank: A
+      description: "12V 100Ah — Bank A bottom battery (2S series)"
+
+    - port: /dev/ttyBatteryPZEM
+      baudrate: 9600
+      stopbits: 2
+      timeout: 1.0
+      slave_addr: 0x02
+      label: "Battery 2"
+      bank: A
+      description: "12V 100Ah — Bank A top battery (2S series)"
+
+    # ── Bank B (200Ah expansion — ikakabit lang pag mag-eexpand) ──
+    - port: /dev/ttyBatteryPZEM
+      baudrate: 9600
+      stopbits: 2
+      timeout: 1.0
+      slave_addr: 0x03
+      label: "Battery 3"
+      bank: B
+      description: "12V 100Ah — Bank B bottom battery (parallel expansion)"
+
+    - port: /dev/ttyBatteryPZEM
+      baudrate: 9600
+      stopbits: 2
+      timeout: 1.0
+      slave_addr: 0x04
+      label: "Battery 4"
+      bank: B
+      description: "12V 100Ah — Bank B top battery (parallel expansion)"
+
+  # --- PZEM-004T AC Power Meters (UART) ---
+  # Both units use slave_addr=0x01, isolated by separate serial ports.
+  pzem004t:
+    grid:
+      port: /dev/ttyGridPZEM
+      baudrate: 9600
+      timeout: 1.0
+      slave_addr: 0x01
+      label: "Grid AC Meter"
+      description: "Monitors grid voltage, current, frequency, power"
+
+    inverter:
+      port: /dev/ttyInverterPZEM
+      baudrate: 9600
+      timeout: 1.0
+      slave_addr: 0x01
+      label: "Inverter AC Meter"
+      description: "Monitors inverter AC output voltage, current, frequency, power"
+
+  # --- DHT22 Temperature Sensor (GPIO) ---
+  dht:
+    sensor_type: DHT22     # DHT11 or DHT22 — must match physical sensor
+    gpio_pin: 27           # BCM GPIO 27 = board.D27 (matches flask DHT_PIN=27 and Temp.py)
+    description: "Enclosure temperature monitor"
+
+  # --- RTC DS3231 Real-Time Clock (I2C) ---
+  ds3231:
+    address: 0x68
+    bus: 1
+    label: "Real-Time Clock"
+    description: "Provides accurate timestamping"
+
+  # --- Arduino Solar Sensors (via /dev/ttyArduino USB Serial) ---
+  # Solar data is read by Arduino Uno and sent to Flask via JSON '?' command.
+  # No direct I2C/UART connection from RPi to solar sensors.
+  arduino_solar:
+    port: /dev/ttyArduino
+    baudrate: 9600
+    array_config: 2S2P          # 2 series strings in parallel
+    # String 1: PV-01(A0) + PV-02(A1) in series
+    # String 2: PV-03(A2) + PV-04(A3) in series
+    # Parallel output: Vmp=84.74V, Voc~100.80V, Imp=27.38A, Pmax=2320W
+    wcs1500_sensitivity_va: 0.011   # 11 mV/A bench-tested
+    wcs1500_zero_v: 2.5
+    wcs1500_zero_filter_a: 0.15     # Below this = 0.00A
+    panels:
+      - pin: A0
+        label: "PV-01"
+        string: 1
+        sensor: WCS1500
+        description: "Panel 1 (String 1) current"
+      - pin: A1
+        label: "PV-02"
+        string: 1
+        sensor: WCS1500
+        description: "Panel 2 (String 1) current"
+      - pin: A2
+        label: "PV-03"
+        string: 2
+        sensor: WCS1500
+        description: "Panel 3 (String 2) current"
+      - pin: A3
+        label: "PV-04"
+        string: 2
+        sensor: WCS1500
+        description: "Panel 4 (String 2) current"
+    voltage_divider:
+      pin: A4
+      r1_kohm: 200              # High-side resistor (bench-tested)
+      r2_kohm: 10               # Low-side resistor
+      ratio: 21.0               # (200k+10k)/10k, safe 0-105V
+      voltage_filter_v: 1.5     # Below this = 0.00V
+      description: "2S2P array DC voltage (Voc ~100.80V, max safe 105V)"
+
+# --- Calibration Offsets (Optional) ---
+calibration:
+  pzem017:
+    voltage_offset: 0.0    # V (applied to both units)
+    current_offset: 0.0    # A (applied to both units)
+
+  pzem004t:
+    voltage_offset: 0.0    # V
+    frequency_offset: 0.0  # Hz
+
+  temperature:
+    offset: 0.0            # °C
+
+# --- Polling Rates ---
+polling:
+  background_loop_s: 5.0        # Target cycle time (flask background_logger)
+  arduino_poll_s: 5.0           # Arduino '?' query interval
+  pzem017_interval_s: 2.0       # PZEM-017 DC battery read interval
+  pzem004t_interval_s: 2.0      # PZEM-004T read interval
+  dht_interval_s: 5.0           # DHT22 read interval
+  rtc_sync_interval_s: 60.0     # RTC time sync interval
